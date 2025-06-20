@@ -1,0 +1,5 @@
+data_outputs/
+data_inputs/
+__pycache__/
+*.pyc
+my-virtualenv/
