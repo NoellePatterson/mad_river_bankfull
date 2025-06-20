@@ -33,7 +33,7 @@ elif reach_name == 'upper':
     reach_id = 4577784
      
 
-API_KEY = 'AIzaSyA7Y8s8ZV1mDm4YMJuSqCyxbZqtaCgzXEU'
+API_KEY = ''
 API_URL = 'https://nwm-api.ciroh.org'
 RETURN_PERIOD_ENDPOINT = f'{API_URL}/return-period'
 
