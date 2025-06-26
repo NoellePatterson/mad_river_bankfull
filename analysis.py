@@ -70,7 +70,6 @@ def id_benchmark_bankfull(transects, dem, d_interval, bankfull_boundary, plot_in
             bankfull_benchmark.append(np.nan)
             continue
         coords = [(point.x, point.y) for point in intersect_pts.geometry[0].geoms]
-        # Be aware, Scotia transects size exceeds limits for figures saved in one folder (no warning issued)
         bankfull_z = list(dem.sample(coords))
         bankfull_z_plot_avg = np.nanmean([bankfull_z[0][0], bankfull_z[1][0]]) # Use average value of bankfull to smooth out inconsistencies
         bankfull_benchmark.append(bankfull_z_plot_avg)
@@ -263,7 +262,7 @@ def calc_dwdh(transects, dem, plot_interval, d_interval, width_calc_method, reac
         wh_append = pd.DataFrame({'widths':[wh_ls], 'transect_id':transects_index, 'thalweg_elev':thalweg, 'thalweg_distance':thalweg_distance})
         all_widths_df = pd.concat([all_widths_df, wh_append], ignore_index=True)
 
-    # Create long format of all widths and save this too. Code from Colin. 
+    # Create long format of all widths and save this too. Remove if no longer used. 
     data_files = os.listdir('data_outputs/{}/all_widths/'.format(reach_name))
     data_files = sorted(data_files, key=lambda x: int(x.split('_')[1].split('.')[0]))
     dtypes_widths = {'elevation_m':float, 'width_m':float}
@@ -370,6 +369,7 @@ def calc_derivatives(d_interval, all_widths_df, slope_window, lower_bound, upper
         # plt.savefig('data_outputs/{}/derivative_plots/{}.jpeg'.format(reach_name, x_index))
     
     # Use thalweg elevs to detrend bankfull elevation results. Don't remove intercept (keep at elevation) 
+    # remove this if no longer needed. 
     x = np.array(all_widths_df['transect_id']).reshape((-1, 1))
     y = np.array(all_widths_df['thalweg_elev'])
     model = LinearRegression().fit(x, y)
@@ -392,7 +392,7 @@ def calc_derivatives(d_interval, all_widths_df, slope_window, lower_bound, upper
 
     return(topo_bankfull, topo_bankfull_detrend)
 
-def calc_derivatives_aggregate(d_interval, all_widths_df, slope_window, lower_bound, upper_bound, reach_name):
+def calc_derivatives_aggregate(d_interval, all_widths_df, slope_window, reach_name):
 
     # Function for identifying top inflection point peaks
     def top_peaks_id(peaks_array, num_peaks):
