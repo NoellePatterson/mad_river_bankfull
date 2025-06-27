@@ -136,8 +136,6 @@ def create_bankfull_pts(transects, dem, thalweg, d_interval, spatial_plot_interv
                         if val * prev_val < 0:
                             current_intersect_pts.append(stations['geometry'][index])
                             # intersection_pts.append(stations['geometry'][index])
-                if transect_index == 7:
-                    breakpoint()
                 # If more than two intersection points identified in the transect drop all except two closest to thalweg
                 if len(current_intersect_pts) > 2:
                     # Code from ChatGPT
@@ -178,14 +176,21 @@ def create_bankfull_pts(transects, dem, thalweg, d_interval, spatial_plot_interv
                     left_points = [p for p in point_info if p['side'] == 'left']
                     right_points = [p for p in point_info if p['side'] == 'right']
 
+                    if not left_points and not right_points:
+                        # No valid points found, skip to next transect
+                        continue
+
                     closest_left = min(left_points, key=lambda p: p['distance'], default=None)
                     closest_right = min(right_points, key=lambda p: p['distance'], default=None)
-                    intersection_pts.append(closest_left['point'])
-                    intersection_pts.append(closest_right['point'])
+                    if closest_left is not None:
+                        intersection_pts.append(closest_left['point'])
+                    if closest_right is not None:
+                        intersection_pts.append(closest_right['point'])
                 else:
                     if current_intersect_pts:
                         intersection_pts.append(current_intersect_pts[0])
-                        intersection_pts.append(current_intersect_pts[1])
+                        if len(current_intersect_pts) > 1:
+                            intersection_pts.append(current_intersect_pts[1])
         multipoint_geom = MultiPoint(intersection_pts)
         multipoint = gpd.GeoDataFrame(index=[0], crs=transects.crs, geometry=[multipoint_geom])
         multipoint.to_file(filename='data_outputs/{}/spatial/inflections_{}_multipoint.shp'.format(reach_name, sign), driver="ESRI Shapefile")

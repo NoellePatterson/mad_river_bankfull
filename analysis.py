@@ -262,19 +262,6 @@ def calc_dwdh(transects, dem, plot_interval, d_interval, width_calc_method, reac
         wh_append = pd.DataFrame({'widths':[wh_ls], 'transect_id':transects_index, 'thalweg_elev':thalweg, 'thalweg_distance':thalweg_distance})
         all_widths_df = pd.concat([all_widths_df, wh_append], ignore_index=True)
 
-    # Create long format of all widths and save this too. Remove if no longer used. 
-    data_files = os.listdir('data_outputs/{}/all_widths/'.format(reach_name))
-    data_files = sorted(data_files, key=lambda x: int(x.split('_')[1].split('.')[0]))
-    dtypes_widths = {'elevation_m':float, 'width_m':float}
-    df_widths_long = pd.DataFrame()
-    for n in range(0,len(data_files)):
-        df_temporary = pd.read_csv('data_outputs/{}/all_widths/'.format(reach_name) + data_files[n], skiprows=1, names=['elevation_m','width_m'], dtype=dtypes_widths, sep=',', index_col=False)
-        df_temporary['elevation_m'] = df_temporary['elevation_m'] / 10.0 
-        df_temporary = df_temporary[df_temporary.width_m > 0]
-        df_temporary['xs_id'] = np.ones([len(df_temporary), 1]) * n
-        df_widths_long = pd.concat([df_widths_long, df_temporary], axis=0, ignore_index=True)
-
-    df_widths_long.to_csv('data_outputs/{}/all_widths_long.csv'.format(reach_name))
     bankfull_width = np.nanmedian(bankfull_width_ls)
     all_widths_df.to_csv('data_outputs/{}/all_widths.csv'.format(reach_name))
     return(all_widths_df, bankfull_width)
@@ -370,7 +357,7 @@ def calc_derivatives(d_interval, all_widths_df, slope_window, lower_bound, upper
     
     # Use thalweg elevs to detrend bankfull elevation results. Don't remove intercept (keep at elevation) 
     # remove this if no longer needed. 
-    x = np.array(all_widths_df['transect_id']).reshape((-1, 1))
+    x = np.cumsum(all_widths_df['thalweg_distance'].values).reshape((-1,1))
     y = np.array(all_widths_df['thalweg_elev'])
     model = LinearRegression().fit(x, y)
     slope = model.coef_
@@ -392,7 +379,7 @@ def calc_derivatives(d_interval, all_widths_df, slope_window, lower_bound, upper
 
     return(topo_bankfull, topo_bankfull_detrend)
 
-def calc_derivatives_aggregate(d_interval, all_widths_df, slope_window, reach_name):
+def calc_derivatives_aggregate(d_interval, all_widths_df, slope_window, lower_bound, upper_bound, reach_name):
 
     # Function for identifying top inflection point peaks
     def top_peaks_id(peaks_array, num_peaks):
@@ -416,14 +403,15 @@ def calc_derivatives_aggregate(d_interval, all_widths_df, slope_window, reach_na
 
     # Use full array of 2nd deriv values to find range of inflection points across reach
     # Use thalweg elevs to detrend 2nd derivatives. Don't remove intercept (keep at elevation) 
-    x = np.array(all_widths_df['transect_id']).reshape((-1, 1))
+    # create x variation which is an accumulated distance from the furthest upstream cross-section
+    x = np.cumsum(all_widths_df['thalweg_distance'].values).reshape((-1,1))
     y = np.array(all_widths_df['thalweg_elev'])
     model = LinearRegression().fit(x, y)
     slope = model.coef_
     intercept = model.intercept_
     fit_slope = slope*x
     fit_slope = [val[0] for val in fit_slope]
-
+    # breakpoint()
     '''
     Alt inflection point method: calc inflection points from aggregated width/depth curve
     '''
@@ -535,16 +523,17 @@ def calc_derivatives_aggregate(d_interval, all_widths_df, slope_window, reach_na
     inflections_array = inflections_df.mean(axis=0, skipna=True)
 
     # identify top three peaks (across positive and negative)
-    peaks_pos = find_peaks(inflections_array, height=max(inflections_array)/2, distance=5, width=2, prominence=20) # require peaks to be at least half the mag of max peak
+    # prominence req needed for middle reach but doesn't work for upper reach. 
+    peaks_pos = find_peaks(inflections_array, height=max(inflections_array)/2, distance=5, width=2) #, prominence=20) # require peaks to be at least half the mag of max peak
     inflections_array_neg = [-i for i in inflections_array] # invert all signs to detect negative peaks
-    peaks_neg = find_peaks(inflections_array_neg, height=max(inflections_array_neg)/2, distance=5, width=2, prominence=20) # require peaks to be at least half the mag of max peak
+    peaks_neg = find_peaks(inflections_array_neg, height=max(inflections_array_neg)/2, distance=5, width=2) #, prominence=20) # require peaks to be at least half the mag of max peak
     # save peak locs for plotting along wd and cross-sections
     # ID top 3 peaks in each category - positive
     max_pos_peak = top_peaks_id(peaks_pos, 3)
 
     # ID top 3 peaks in each category - negative
     max_neg_peak = top_peaks_id(peaks_neg, 3)
-    
+
     # Plot results density-style
     # Determine x-vals for plotting
     x_range = range(0, len(inflections_array))

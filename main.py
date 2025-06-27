@@ -27,7 +27,7 @@ from spatial_analysis import trim_cross_section, create_bankfull_pts
 # 3. Calculate first and second order derivatives of the channel widths to identify topographic bankfull (Analysis.py -> calc_derivatives)
 # 4. Post-processing: plot results (Visualization.py -> plot_bankfull_increments, plot_longitudinal_bf)
 
-reach_name = 'lower' # choose either: 'upper', 'middle', or 'lower'
+reach_name = 'upper' # choose either: 'upper', 'middle', or 'lower'
 
 # Input data file paths  
 thalweg_fp = 'data_inputs/thalweg/Thalweg.shp'
@@ -82,13 +82,13 @@ start_index = 0 # If using cross-sections from the middle of a series optionally
 
 
 # output = id_benchmark_bankfull(transects, dem, d_interval, bankfull_boundary, plot_interval)
-# all_widths_df, bankfull_width = calc_dwdh(transects, dem, plot_interval, d_interval, width_calc_method, reach_name)
+all_widths_df, bankfull_width = calc_dwdh(transects, dem, plot_interval, d_interval, width_calc_method, reach_name)
 # print('Dwdh calc done!!')
 
 # topo_bankfull, topo_bankfull_detrend = calc_derivatives(d_interval, all_widths_df, slope_window, lower_bound, upper_bound, width_calc_method, reach_name)
 # print('Derivatives calc done!!')
 
-# output = calc_derivatives_aggregate(d_interval, all_widths_df, slope_window, lower_bound, upper_bound, reach_name)
+output = calc_derivatives_aggregate(d_interval, all_widths_df, slope_window, lower_bound, upper_bound, reach_name)
 # output = transect_plot(transects, dem, plot_interval, d_interval, bankfull_boundary, reach_name)
 
 # breakpoint()
@@ -103,4 +103,4 @@ start_index = 0 # If using cross-sections from the middle of a series optionally
 
 # optional spatial analyses
 # output = trim_cross_section(transects, thalweg, reach_name)
-output = create_bankfull_pts(transects, dem, thalweg, d_interval, spatial_plot_interval, reach_name)
+# output = create_bankfull_pts(transects, dem, thalweg, d_interval, spatial_plot_interval, reach_name)
